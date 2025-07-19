@@ -12295,7 +12295,7 @@ run(function()
 	local invisWasEnabled = false
 
 	damageboost = vape.Categories.Blatant:CreateModule({
-		Name = "DamageBoost",
+		Name = "Damage Boost",
 		Tooltip = "IShowSpeed",
 		Function = function(callback)
 			if callback then
