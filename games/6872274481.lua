@@ -12296,7 +12296,7 @@ run(function()
 
 	damageboost = vape.Categories.Blatant:CreateModule({
 		Name = "Damage Boost",
-		Tooltip = "Gives you a burst of speed when you take knockback.",
+		Tooltip = "Gives you more speed when you take knockback.",
 		Function = function(callback)
 			if callback then
 				notif('DamageBoost', '[WARNING] This module is still in development and kinda buggy!', 1.1, 'warning')																																																																																																																																																																																												
