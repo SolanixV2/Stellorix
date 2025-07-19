@@ -12296,7 +12296,7 @@ run(function()
 
 	damageboost = vape.Categories.Blatant:CreateModule({
 		Name = "Damage Boost",
-		Tooltip = "Gives you faster speed when you take knockback🤑.",
+		Tooltip = "Gives you a burst of speed when you take knockback.",
 		Function = function(callback)
 			if callback then
 				notif('DamageBoost', '[WARNING] This module is still in development and kinda buggy!', 1.1, 'warning')																																																																																																																																																																																												
@@ -12304,17 +12304,19 @@ run(function()
 					local player = damageTable.entityInstance and playersService:GetPlayerFromCharacter(damageTable.entityInstance)
 					local attacker = playersService:GetPlayerFromCharacter(damageTable.fromEntity)
 					local knockback = damageTable.knockbackMultiplier and damageTable.knockbackMultiplier.horizontal
-					if player == lplr and (knockback and knockback > 0 or attacker ~= nil) and not vape.Modules["Long Jump"].Enabled then
+					if player == lplr and (knockback and knockback > 0 or attacker ~= nil) and not (vape.Modules["Long Jump"] and vape.Modules["Long Jump"].Enabled) then
 						local moveDirection = lplr.Character and lplr.Character:FindFirstChild("Humanoid") and lplr.Character.Humanoid.MoveDirection
 						if moveDirection and moveDirection.Magnitude > 0 then
 							speedEnd = tick() + damageboostduration.Value
 							damageMultiplier = damageboostmultiplier.Value
-							if vape.Modules["Speed"].Enabled then
+
+							if vape.Modules["Speed"] and vape.Modules["Speed"].Enabled then
 								speedWasEnabled = true
 								vape.Modules["Speed"]:Toggle()
 							else
 								speedWasEnabled = false
 							end
+
 							if vape.Modules["Invisibility"] and vape.Modules["Invisibility"].Enabled then
 								invisWasEnabled = true
 								vape.Modules["Invisibility"]:Toggle()
@@ -12337,11 +12339,11 @@ run(function()
 						end
 					elseif not restoring then
 						restoring = true
-						if speedWasEnabled then
+						if speedWasEnabled and vape.Modules["Speed"] then
 							vape.Modules["Speed"]:Toggle()
 							speedWasEnabled = false
 						end
-						if invisWasEnabled then
+						if invisWasEnabled and vape.Modules["Invisibility"] then
 							vape.Modules["Invisibility"]:Toggle()
 							invisWasEnabled = false
 						end
@@ -12355,11 +12357,11 @@ run(function()
 					connection:Disconnect()
 					connection = nil
 				end
-				if speedWasEnabled then
+				if speedWasEnabled and vape.Modules["Speed"] then
 					vape.Modules["Speed"]:Toggle()
 					speedWasEnabled = false
 				end
-				if invisWasEnabled then
+				if invisWasEnabled and vape.Modules["Invisibility"] then
 					vape.Modules["Invisibility"]:Toggle()
 					invisWasEnabled = false
 				end
