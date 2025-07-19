@@ -12289,10 +12289,11 @@ run(function()
 	local damageboostmultiplier = nil
 	local speedEnd = 0
 	local damageMultiplier = 0
-	local connection
-	local restoring = false
+	local reenableSpeedTime = 0
+	local reenableInvisTime = 0
 	local speedWasEnabled = false
 	local invisWasEnabled = false
+	local connection
 
 	damageboost = vape.Categories.Blatant:CreateModule({
 		Name = "Damage Boost",
@@ -12303,64 +12304,70 @@ run(function()
 					local player = damageTable.entityInstance and playersService:GetPlayerFromCharacter(damageTable.entityInstance)
 					local attacker = playersService:GetPlayerFromCharacter(damageTable.fromEntity)
 					local knockback = damageTable.knockbackMultiplier and damageTable.knockbackMultiplier.horizontal
+
 					if player == lplr and (knockback and knockback > 0 or attacker ~= nil) and not vape.Modules["Long Jump"].Enabled then
-						local moveDirection = lplr.Character and lplr.Character:FindFirstChild("Humanoid") and lplr.Character.Humanoid.MoveDirection
-						if moveDirection and moveDirection.Magnitude > 0 then
-							speedEnd = tick() + damageboostduration.Value
-							damageMultiplier = damageboostmultiplier.Value
-							if vape.Modules["Speed"].Enabled then
-								speedWasEnabled = true
-								vape.Modules["Speed"]:Toggle()
-							else
-								speedWasEnabled = false
-							end
-							if vape.Modules["Invisibility"] and vape.Modules["Invisibility"].Enabled then
-								invisWasEnabled = true
-								vape.Modules["Invisibility"]:Toggle()
-							else
-								invisWasEnabled = false
-							end
+						speedEnd = tick() + damageboostduration.Value
+						damageMultiplier = damageboostmultiplier.Value
+
+						local Speed = vape.Modules["Speed"]
+						if Speed and Speed.Enabled then
+							speedWasEnabled = true
+							Speed:Toggle()
+							reenableSpeedTime = speedEnd
+						else
+							speedWasEnabled = false
+						end
+
+						local Invisibility = vape.Modules["Invisibility"]
+						if Invisibility and Invisibility.Enabled then
+							invisWasEnabled = true
+							Invisibility:Toggle()
+							reenableInvisTime = speedEnd
+						else
+							invisWasEnabled = false
 						end
 					end
 				end))
 
-				connection = runService.RenderStepped:Connect(function()
-					if not damageboost.Enabled then return end
-					if tick() < speedEnd then
-						local char = lplr.Character
-						local hrp = char and char:FindFirstChild("HumanoidRootPart")
-						local hum = char and char:FindFirstChild("Humanoid")
-						if hrp and hum and hum.MoveDirection.Magnitude > 0 then
-							local direction = hum.MoveDirection.Unit * damageMultiplier * 25
-							hrp.Velocity = Vector3.new(direction.X, hrp.Velocity.Y, direction.Z)
+				connection = runService.PreSimulation:Connect(function()
+					local char = lplr.Character
+					if not damageboost.Enabled or not char then return end
+
+					local hrp = char:FindFirstChild("HumanoidRootPart")
+					local hum = char:FindFirstChildWhichIsA("Humanoid")
+					if tick() < speedEnd and hrp and hum and hum.MoveDirection.Magnitude > 0 then
+						local moveDir = hum.MoveDirection.Unit
+						local boost = moveDir * damageMultiplier * 25
+						local currentVelocity = hrp.AssemblyLinearVelocity
+						hrp.AssemblyLinearVelocity = Vector3.new(boost.X, currentVelocity.Y, boost.Z)
+					end
+
+					if speedWasEnabled and tick() >= reenableSpeedTime then
+						local Speed = vape.Modules["Speed"]
+						if Speed and not Speed.Enabled then
+							Speed:Toggle()
 						end
-					elseif not restoring then
-						restoring = true
-						if speedWasEnabled then
-							vape.Modules["Speed"]:Toggle()
-							speedWasEnabled = false
+						speedWasEnabled = false
+					end
+
+					if invisWasEnabled and tick() >= reenableInvisTime then
+						local Invisibility = vape.Modules["Invisibility"]
+						if Invisibility and not Invisibility.Enabled then
+							Invisibility:Toggle()
 						end
-						if invisWasEnabled then
-							vape.Modules["Invisibility"]:Toggle()
-							invisWasEnabled = false
-						end
-						task.delay(0.1, function() restoring = false end)
+						invisWasEnabled = false
 					end
 				end)
 			else
 				speedEnd = 0
 				damageMultiplier = 0
+				speedWasEnabled = false
+				invisWasEnabled = false
+				reenableSpeedTime = 0
+				reenableInvisTime = 0
 				if connection then
 					connection:Disconnect()
 					connection = nil
-				end
-				if speedWasEnabled then
-					vape.Modules["Speed"]:Toggle()
-					speedWasEnabled = false
-				end
-				if invisWasEnabled then
-					vape.Modules["Invisibility"]:Toggle()
-					invisWasEnabled = false
 				end
 			end
 		end
@@ -12381,4 +12388,4 @@ run(function()
 		Decimal = 20,
 		Default = 1.4
 	})
-end)																																																																																																																																																																																									
+end)
