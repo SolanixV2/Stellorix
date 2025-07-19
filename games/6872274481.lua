@@ -12299,7 +12299,7 @@ run(function()
 		Tooltip = "Gives you faster speed when you take knockback🤑.",
 		Function = function(callback)
 			if callback then
-				notif('DamageBoost', '[WARNING] This module is still in development and kinda buggy!', 1.1, 'warn')																																																																																																																																																																																												
+				notif('DamageBoost', '[WARNING] This module is still in development and kinda buggy!', 1.1, 'warning')																																																																																																																																																																																												
 				damageboost:Clean(vapeEvents.EntityDamageEvent.Event:Connect(function(damageTable)
 					local player = damageTable.entityInstance and playersService:GetPlayerFromCharacter(damageTable.entityInstance)
 					local attacker = playersService:GetPlayerFromCharacter(damageTable.fromEntity)
