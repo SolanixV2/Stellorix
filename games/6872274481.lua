@@ -5884,7 +5884,8 @@ run(function()
 	})
 end)
 
-local antihitting = false
+getgenv().antihitting = false
+getgenv().AntiHitOnGround = false
 local Attacking
 run(function()
 	local Killaura
@@ -5918,24 +5919,31 @@ run(function()
 	task.spawn(function()
 		AttackRemote = bedwars.Client:Get(remotes.AttackEntity).instance
 	end)
+
 	local function getAttackData()
 		if Mouse.Enabled then
 			if not inputService:IsMouseButtonPressed(0) then return false end
 		end
+
 		if GUI.Enabled then
 			if bedwars.AppController:isLayerOpen(bedwars.UILayers.MAIN) then return false end
 		end
+
 		local sword = Limit.Enabled and store.hand or store.tools.sword
 		if not sword or not sword.tool then return false end
+
 		local meta = bedwars.ItemMeta[sword.tool.Name]
 		if Limit.Enabled then
 			if store.hand.toolType ~= 'sword' or bedwars.DaoController.chargingMaid then return false end
 		end
+
 		if LegitAura.Enabled then
 			if (tick() - bedwars.SwordController.lastSwing) > 0.2 then return false end
 		end
+
 		return sword, meta
 	end
+
 	Killaura = vape.Categories.Blatant:CreateModule({
 		Name = 'Killaura',
 		Function = function(callback)
@@ -5945,6 +5953,7 @@ run(function()
 						lplr.PlayerGui.MobileUI['2'].Visible = Limit.Enabled
 					end)
 				end
+
 				if Animation.Enabled and not (identifyexecutor and table.find({'Argon', 'Delta'}, ({identifyexecutor()})[1])) then
 					local fake = {
 						Controllers = {
@@ -5960,8 +5969,9 @@ run(function()
 							}
 						}
 					}
-					debug.setupvalue(oldSwing or bedwars.SwordController.playSwordEffect, AutoCharge.Enabled and 2 or 6, fake)
+					debug.setupvalue(bedwars.SwordController.playSwordEffect, 6, fake)
 					debug.setupvalue(bedwars.ScytheController.playLocalAnimation, 3, fake)
+
 					task.spawn(function()
 						local started = false
 						repeat
@@ -5971,9 +5981,11 @@ run(function()
 								end
 								local first = not started
 								started = true
+
 								if AnimationMode.Value == 'Random' then
 									anims.Random = {{CFrame = CFrame.Angles(math.rad(math.random(1, 360)), math.rad(math.random(1, 360)), math.rad(math.random(1, 360))), Time = 0.12}}
 								end
+
 								for _, v in anims[AnimationMode.Value] do
 									AnimTween = tweenService:Create(gameCamera.Viewmodel.RightHand.RightWrist, TweenInfo.new(first and (AnimationTween.Enabled and 0.001 or 0.1) or v.Time / AnimationSpeed.Value, Enum.EasingStyle.Linear), {
 										C0 = armC0 * v.CFrame
@@ -5990,12 +6002,14 @@ run(function()
 								})
 								AnimTween:Play()
 							end
+
 							if not started then
 								task.wait(1 / UpdateRate.Value)
 							end
 						until (not Killaura.Enabled) or (not Animation.Enabled)
 					end)
 				end
+
 				local swingCooldown = 0
 				repeat
 					local attacked, sword, meta = {}, getAttackData()
@@ -6011,35 +6025,41 @@ run(function()
 							Limit = MaxTargets.Value,
 							Sort = sortmethods[Sort.Value]
 						})
+
 						if #plrs > 0 then
 							switchItem(sword.tool, 0)
 							local selfpos = entitylib.character.RootPart.Position
 							local localfacing = entitylib.character.RootPart.CFrame.LookVector * Vector3.new(1, 0, 1)
+
 							for _, v in plrs do
 								local delta = (v.RootPart.Position - selfpos)
 								local angle = math.acos(localfacing:Dot((delta * Vector3.new(1, 0, 1)).Unit))
 								if angle > (math.rad(AngleSlider.Value) / 2) then continue end
+
 								table.insert(attacked, {
 									Entity = v,
 									Check = delta.Magnitude > AttackRange.Value and BoxSwingColor or BoxAttackColor
 								})
 								targetinfo.Targets[v] = tick() + 1
+
 								if not Attacking then
 									Attacking = true
 									store.KillauraTarget = v
 									if not Swing.Enabled and AnimDelay < tick() and not LegitAura.Enabled then
-										AnimDelay = tick() + (meta.sword.respectAttackSpeedForEffects and meta.sword.attackSpeed or math.max(ChargeTime.Value, 0.11))
+										AnimDelay = tick() + (meta.sword.respectAttackSpeedForEffects and meta.sword.attackSpeed or 0.11)
 										bedwars.SwordController:playSwordEffect(meta, false)
 										if meta.displayName:find(' Scythe') then
 											bedwars.ScytheController:playLocalAnimation()
 										end
+
 										if vape.ThreadFix then
 											setthreadidentity(8)
 										end
 									end
 								end
+
 								if delta.Magnitude > AttackRange.Value then continue end
-								if delta.Magnitude < 14.4 and (tick() - swingCooldown) < ChargeTime.Value then continue end
+
 								local actualRoot = v.Character.PrimaryPart
 								if actualRoot then
 									local dir = CFrame.lookAt(selfpos, actualRoot.Position).LookVector
@@ -6048,28 +6068,37 @@ run(function()
 									bedwars.SwordController.lastAttack = workspace:GetServerTimeNow()
 									store.attackReach = (delta.Magnitude * 100) // 1 / 100
 									store.attackReachUpdate = tick() + 1
-									if delta.Magnitude < 14.4 and ChargeTime.Value > 0.11 then
+
+									if delta.Magnitude < 14.4 and (meta.sword.respectAttackSpeedForEffects and meta.sword.attackSpeed or 0.11) < 0.11 then
 										AnimDelay = tick()
 									end
-									store.attackSpeed = ChargeTime.Value
-									AttackRemote:FireServer({
-										weapon = sword.tool,
-										chargedAttack = {chargeRatio = 0},
-										lastSwingServerTimeDelta = 0.5,
-										entityInstance = v.Character,
-										validate = {
-											raycast = {
-												cameraPosition = {value = pos},
-												cursorDirection = {value = dir}
-											},
-											targetPosition = {value = actualRoot.Position},
-											selfPosition = {value = pos}
-										}
-									})
+
+									store.attackSpeed = (meta.sword.respectAttackSpeedForEffects and meta.sword.attackSpeed or 0.11)
+
+									if vape.Modules['Auto Dodge'].Enabled and AntiHitOnGround or not vape.Modules['Auto Dodge'].Enabled then
+										if antihitting then
+											warn('fired attack remote via antihit')
+										end
+										AttackRemote:FireServer({
+											weapon = sword.tool,
+											chargedAttack = {chargeRatio = 0},
+											lastSwingServerTimeDelta = 0.5,
+											entityInstance = v.Character,
+											validate = {
+												raycast = {
+													cameraPosition = {value = pos},
+													cursorDirection = {value = dir}
+												},
+												targetPosition = {value = actualRoot.Position},
+												selfPosition = {value = pos}
+											}
+										})
+									end
 								end
 							end
 						end
 					end
+
 					for i, v in Boxes do
 						v.Adornee = attacked[i] and attacked[i].Entity.RootPart or nil
 						if v.Adornee then
@@ -6077,14 +6106,17 @@ run(function()
 							v.Transparency = 1 - attacked[i].Check.Opacity
 						end
 					end
+
 					for i, v in Particles do
 						v.Position = attacked[i] and attacked[i].Entity.RootPart.Position or Vector3.new(9e9, 9e9, 9e9)
 						v.Parent = attacked[i] and gameCamera or nil
 					end
+
 					if Face.Enabled and attacked[1] then
 						local vec = attacked[1].Entity.RootPart.Position * Vector3.new(1, 0, 1)
 						entitylib.character.RootPart.CFrame = CFrame.lookAt(entitylib.character.RootPart.Position, Vector3.new(vec.X, entitylib.character.RootPart.Position.Y + 0.001, vec.Z))
 					end
+
 					--#attacked > 0 and #attacked * 0.02 or
 					task.wait(1 / UpdateRate.Value)
 				until not Killaura.Enabled
@@ -6127,8 +6159,8 @@ run(function()
 	SwingRange = Killaura:CreateSlider({
 		Name = 'Swing range',
 		Min = 1,
-		Max = 23,
-		Default = 23,
+		Max = 18,
+		Default = 18,
 		Suffix = function(val)
 			return val == 1 and 'stud' or 'studs'
 		end
@@ -6136,12 +6168,11 @@ run(function()
 	AttackRange = Killaura:CreateSlider({
 		Name = 'Attack range',
 		Min = 1,
-		Max = 23,
-		Default = 23,
+		Max = 18,
+		Default = 18,
 		Suffix = function(val)
 			return val == 1 and 'stud' or 'studs'
 		end
-	
 	})
 	AngleSlider = Killaura:CreateSlider({
 		Name = 'Max angle',
