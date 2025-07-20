@@ -6196,14 +6196,14 @@ run(function()
 		Suffix = function(val)
 			return val == 1 and 'stud' or 'studs'
 		end
-	[[--})
-	ChargeTime = Killaura:CreateSlider({
-		Name = 'Swing time',
-		Min = 0,
-		Max = 0.5,
-		Default = 0.42,
-		Decimal = 100
-	})--]]
+	--})
+	--ChargeTime = Killaura:CreateSlider({
+		--Name = 'Swing time',
+		--Min = 0,
+		--Max = 0.5,
+		--Default = 0.42,
+		--Decimal = 100
+	})
 	AngleSlider = Killaura:CreateSlider({
 		Name = 'Max angle',
 		Min = 1,
