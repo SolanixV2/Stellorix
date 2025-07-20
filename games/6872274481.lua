@@ -5884,8 +5884,6 @@ run(function()
 	})
 end)
 
-getgenv().antihitting = false
-getgenv().AntiHitOnGround = false
 local Attacking
 run(function()
 	local Killaura
@@ -5893,7 +5891,6 @@ run(function()
 	local Sort
 	local SwingRange
 	local AttackRange
-	local ChargeTime
 	local UpdateRate
 	local AngleSlider
 	local MaxTargets
@@ -5969,7 +5966,7 @@ run(function()
 							}
 						}
 					}
-					debug.setupvalue(bedwars.SwordController.playSwordEffect, 6, fake)
+					debug.setupvalue(oldSwing or bedwars.SwordController.playSwordEffect, 6, fake)
 					debug.setupvalue(bedwars.ScytheController.playLocalAnimation, 3, fake)
 
 					task.spawn(function()
@@ -6046,7 +6043,7 @@ run(function()
 									Attacking = true
 									store.KillauraTarget = v
 									if not Swing.Enabled and AnimDelay < tick() and not LegitAura.Enabled then
-										AnimDelay = tick() + (meta.sword.respectAttackSpeedForEffects and meta.sword.attackSpeed or 0.11)
+										AnimDelay = tick() + (meta.sword.respectAttackSpeedForEffects and meta.sword.attackSpeed or math.max(ChargeTime.Value, 0.11))
 										bedwars.SwordController:playSwordEffect(meta, false)
 										if meta.displayName:find(' Scythe') then
 											bedwars.ScytheController:playLocalAnimation()
@@ -6059,6 +6056,7 @@ run(function()
 								end
 
 								if delta.Magnitude > AttackRange.Value then continue end
+								if delta.Magnitude < 14.4 and (tick() - swingCooldown) < math.max(ChargeTime.Value, 0.02) then continue end
 
 								local actualRoot = v.Character.PrimaryPart
 								if actualRoot then
@@ -6069,31 +6067,24 @@ run(function()
 									store.attackReach = (delta.Magnitude * 100) // 1 / 100
 									store.attackReachUpdate = tick() + 1
 
-									if delta.Magnitude < 14.4 and (meta.sword.respectAttackSpeedForEffects and meta.sword.attackSpeed or 0.11) < 0.11 then
+									if delta.Magnitude < 14.4 and ChargeTime.Value > 0.11 then
 										AnimDelay = tick()
 									end
 
-									store.attackSpeed = (meta.sword.respectAttackSpeedForEffects and meta.sword.attackSpeed or 0.11)
-
-									if vape.Modules['Auto Dodge'].Enabled and AntiHitOnGround or not vape.Modules['Auto Dodge'].Enabled then
-										if antihitting then
-											warn('fired attack remote via antihit')
-										end
-										AttackRemote:FireServer({
-											weapon = sword.tool,
-											chargedAttack = {chargeRatio = 0},
-											lastSwingServerTimeDelta = 0.5,
-											entityInstance = v.Character,
-											validate = {
-												raycast = {
-													cameraPosition = {value = pos},
-													cursorDirection = {value = dir}
-												},
-												targetPosition = {value = actualRoot.Position},
-												selfPosition = {value = pos}
-											}
-										})
-									end
+									AttackRemote:FireServer({
+										weapon = sword.tool,
+										chargedAttack = {chargeRatio = 0},
+										lastSwingServerTimeDelta = 0.5,
+										entityInstance = v.Character,
+										validate = {
+											raycast = {
+												cameraPosition = {value = pos},
+												cursorDirection = {value = dir}
+											},
+											targetPosition = {value = actualRoot.Position},
+											selfPosition = {value = pos}
+										}
+									})
 								end
 							end
 						end
@@ -6383,7 +6374,7 @@ run(function()
 		Tooltip = 'Only attacks while swinging manually'
 	})]]
 end)
-																																																					
+																																																															
 run(function()
 	local Value
 	local CameraDir
