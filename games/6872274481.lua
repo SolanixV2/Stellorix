@@ -1283,7 +1283,7 @@ run(function()
 	StrafeIncrease = AimAssist:CreateToggle({Name = 'Strafe increase'})
 end)
 	
-run(function()
+[[--run(function()
 	local old
 	
 	AutoCharge = vape.Categories.Combat:CreateModule({
@@ -1336,7 +1336,7 @@ run(function()
 	    Default = 0.4,
 	    Decimal = 100
 	})
-end)
+end)--]]
 	
 run(function()
 	local AutoClicker
@@ -6196,14 +6196,14 @@ run(function()
 		Suffix = function(val)
 			return val == 1 and 'stud' or 'studs'
 		end
-	})
+	[[--})
 	ChargeTime = Killaura:CreateSlider({
 		Name = 'Swing time',
 		Min = 0,
 		Max = 0.5,
 		Default = 0.42,
 		Decimal = 100
-	})
+	})--]]
 	AngleSlider = Killaura:CreateSlider({
 		Name = 'Max angle',
 		Min = 1,
