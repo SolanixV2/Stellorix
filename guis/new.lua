@@ -6,7 +6,7 @@ local mainapi = {
 		Value = 0.52
 	},
 	HeldKeybinds = {},
-	Keybind = {'C'},
+	Keybind = {'RightShift'},
 	Loaded = false,
 	Libraries = {},
 	Modules = {},
