@@ -12470,6 +12470,10 @@ run(function()
 		return true
 	end
 
+	local function isEnemy(plr)
+		return plr and plr.Team ~= lplr.Team
+	end
+
 	local function shiftPos()
 		if not AntiHit.on or not VeloAntiHit.Enabled then return end
 		local hits = entSys.AllPosition({
@@ -12478,19 +12482,22 @@ run(function()
 			Part = 'RootPart',
 			Players = trigSet.p,
 			NPCs = trigSet.n,
-			Limit = 1
+			Limit = 5
 		})
 
-		if #hits > 0 and not shared.evadeFlag then
-			local base = entSys.character.RootPart
-			if base then
-				shared.evadeFlag = true
-				local targetY = shiftMode == "Up" and 150 or 0
-				shared.anchorBase.CFrame = CFrame.new(base.CFrame.X, targetY, base.CFrame.Z)
-				task.wait(0.15)
-				shared.anchorBase.CFrame = base.CFrame
-				task.wait(0.05)
-				shared.evadeFlag = false
+		for _, target in ipairs(hits) do
+			if target and target.Player and isEnemy(target.Player) and not shared.evadeFlag then
+				local base = entSys.character.RootPart
+				if base then
+					shared.evadeFlag = true
+					local targetY = shiftMode == "Up" and 150 or 0
+					shared.anchorBase.CFrame = CFrame.new(base.CFrame.X, targetY, base.CFrame.Z)
+					task.wait(0.15)
+					shared.anchorBase.CFrame = base.CFrame
+					task.wait(0.05)
+					shared.evadeFlag = false
+				end
+				break
 			end
 		end
 	end
@@ -12545,17 +12552,13 @@ run(function()
 	VeloAntiHit = vape.Categories.Blatant:CreateModule({
 		Name = "VelocityAntiHit",
 		Function = function(enabled)
-			task.spawn(function()
-				repeat task.wait() until store.matchState > 0 or not enabled
-				if not enabled then return end
-				if enabled then
-					AntiHit:engage()
-				else
-					AntiHit:disengage()
-				end
-			end)
+			if enabled then
+				AntiHit:engage()
+			else
+				AntiHit:disengage()
+			end
 		end,
-		Tooltip = "Dodges attacks."
+		Tooltip = "Dodges attacks"
 	})
 
 	VeloAntiHit:CreateTargets({
@@ -12576,4 +12579,4 @@ run(function()
 		Suffix = function(v) return v == 1 and "span" or "spans" end,
 		Function = function(v) scanRad = v end
 	})
-end)					
+end)							
