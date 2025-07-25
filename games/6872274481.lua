@@ -12386,7 +12386,7 @@ run(function()
 	end
 	local utilPack = {QueryUtil = queryutil}
 
-	local dupeNode, altHeight, initOk = nil, nil, false
+	local dupeNode, altHeight
 	shared.anchorBase = nil
 	shared.evadeFlag = false
 
@@ -12470,28 +12470,34 @@ run(function()
 		return true
 	end
 
-	local function shiftPos()
-		if not entSys.isAlive or not shared.anchorBase or not AntiHit.on then return end
+	local function isEnemy(plr)
+		return plr and plr.Team ~= lplr.Team
+	end
 
+	local function shiftPos()
+		if not AntiHit.on or not VeloAntiHit.Enabled then return end
 		local hits = entSys.AllPosition({
 			Range = scanRad,
 			Wallcheck = trigSet.w or nil,
 			Part = 'RootPart',
 			Players = trigSet.p,
 			NPCs = trigSet.n,
-			Limit = 1
+			Limit = 5
 		})
 
-		if #hits > 0 and not shared.evadeFlag then
-			local base = entSys.character.RootPart
-			if base then
-				shared.evadeFlag = true
-				local targetY = shiftMode == "Up" and 150 or 0
-				shared.anchorBase.CFrame = CFrame.new(base.CFrame.X, targetY, base.CFrame.Z)
-				task.wait(0.15)
-				shared.anchorBase.CFrame = base.CFrame
-				task.wait(0.05)
-				shared.evadeFlag = false
+		for _, target in ipairs(hits) do
+			if target and target.Player and isEnemy(target.Player) and not shared.evadeFlag then
+				local base = entSys.character.RootPart
+				if base then
+					shared.evadeFlag = true
+					local targetY = shiftMode == "Up" and 150 or 0
+					shared.anchorBase.CFrame = CFrame.new(base.CFrame.X, targetY, base.CFrame.Z)
+					task.wait(0.15)
+					shared.anchorBase.CFrame = base.CFrame
+					task.wait(0.05)
+					shared.evadeFlag = false
+				end
+				break
 			end
 		end
 	end
@@ -12500,13 +12506,13 @@ run(function()
 		if self.on then return end
 		self.on = true
 
-		initOk = genTwin()
-		if not initOk then
+		if not genTwin() then
 			self:disengage()
 			return
 		end
 
 		self.physHook = physEngine.PreSimulation:Connect(function()
+			if not VeloAntiHit.Enabled then return end
 			if entSys.isAlive and shared.anchorBase and entSys.character.RootPart then
 				local currBase = entSys.character.RootPart
 				local currPos = currBase.CFrame
@@ -12528,7 +12534,7 @@ run(function()
 		end)
 
 		self.respawnHook = entSys.Events.LocalAdded:Connect(function()
-			if self.on then
+			if VeloAntiHit.Enabled then
 				self:disengage()
 				task.wait(0.1)
 				self:engage()
@@ -12538,28 +12544,17 @@ run(function()
 
 	function AntiHit:disengage()
 		self.on = false
-		local success, err = pcall(resetCore)
-		if not success then
-			warn("AntiHit resetCore failed: " .. tostring(err))
-		end
-		if self.physHook then
-			self.physHook:Disconnect()
-			self.physHook = nil
-		end
-		if self.respawnHook then
-			self.respawnHook:Disconnect()
-			self.respawnHook = nil
-		end
+		pcall(resetCore)
+		if self.physHook then self.physHook:Disconnect() self.physHook = nil end
+		if self.respawnHook then self.respawnHook:Disconnect() self.respawnHook = nil end
 	end
-
-	local VeloAntiHit
 
 	VeloAntiHit = vape.Categories.Blatant:CreateModule({
 		Name = "VelocityAntiHit",
 		Function = function(enabled)
 			task.spawn(function()
-				repeat task.wait() until store.matchState > 0 or not VeloAntiHit.Enabled
-				if not VeloAntiHit.Enabled then return end
+				repeat task.wait() until store.matchState > 0 or not enabled
+				if not enabled then return end
 				if enabled then
 					AntiHit:engage()
 				else
@@ -12588,4 +12583,4 @@ run(function()
 		Suffix = function(v) return v == 1 and "span" or "spans" end,
 		Function = function(v) scanRad = v end
 	})
-end)																																																																																																																																																																																									
+end)
